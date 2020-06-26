@@ -1,13 +1,14 @@
 const properties = require('./json/properties.json');
 const users = require('./json/users.json');
-const { Pool } = require('pg');
+const db = require('./db/index.js')
+// const { Pool } = require('pg');
 
-const pool = new Pool({
-  user: 'vagrant',
-  password: '123',
-  host: 'localhost',
-  database: 'lightbnb'
-});
+// const pool = new Pool({
+//   user: 'vagrant',
+//   password: '123',
+//   host: 'localhost',
+//   database: 'lightbnb'
+// });
 
 /// Users
 
@@ -17,7 +18,7 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
-  return pool.query(`
+  return db.query(`
   SELECT id, name, email, password
   FROM users
   WHERE email = $1;
@@ -38,7 +39,7 @@ exports.getUserWithEmail = getUserWithEmail;
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = function(id) {
-  return pool.query(`
+  return db.query(`
   SELECT id, name, email, password
   FROM users
   WHERE id = $1;
@@ -53,14 +54,13 @@ const getUserWithId = function(id) {
 }
 exports.getUserWithId = getUserWithId;
 
-
 /**
  * Add a new user to the database.
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser = function(user) {
-  return pool.query(`
+  return db.query(`
   INSERT INTO users (name, email, password)
   VALUES ($1, $2, $3)
   RETURNING *;
@@ -83,7 +83,7 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return pool.query(`
+  return db.query(`
   SELECT properties.*, reservations.*, avg(rating) as average_rating
   FROM reservations
   JOIN properties ON reservations.property_id = properties.id
@@ -163,11 +163,10 @@ const getAllProperties = function(options, limit = 10) {
   LIMIT $${queryParams.length};
   `;
 
-  return pool.query(queryString, queryParams)
+  return db.query(queryString, queryParams)
   .then(res => res.rows);
 }
 exports.getAllProperties = getAllProperties;
-
 
 /**
  * Add a property to the database
@@ -180,7 +179,7 @@ const addProperty = function(property) {
   // properties[propertyId] = property;
   // return Promise.resolve(property);
 
-  return pool.query(`
+  return db.query(`
   INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, 
                           cost_per_night, street, city, province, post_code, country, 
                           parking_spaces, number_of_bathrooms, number_of_bedrooms)
